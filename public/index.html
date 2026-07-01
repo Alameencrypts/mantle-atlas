@@ -31,6 +31,18 @@
   <section class="intro">
     <p class="eyebrow">The Intelligence Layer for Onchain Research</p>
     <h1>Ask the Mantle ecosystem a question.<br>Get a research brief, not a dashboard.</h1>
+
+    <div class="pulse" id="pulse" hidden>
+      <div class="pulse-label">
+        <span class="pulse-dot"></span>
+        MANTLE CHAIN TVL — LIVE
+      </div>
+      <div class="pulse-figures">
+        <span class="pulse-value" id="pulseValue">—</span>
+        <span class="pulse-change" id="pulseChange"></span>
+      </div>
+      <svg class="pulse-spark" id="pulseSpark" viewBox="0 0 240 48" preserveAspectRatio="none"></svg>
+    </div>
   </section>
 
   <section class="composer">
@@ -52,6 +64,8 @@
     <div class="ledger" id="ledger">
       <!-- filled by JS: the signature evidence strip -->
     </div>
+
+    <div class="chart-wrap" id="chartWrap" hidden></div>
 
     <article class="report" id="reportBody"></article>
 
