@@ -175,17 +175,6 @@ body::after {
   letter-spacing: 0.16em;
   color: var(--brass);
   margin: 0 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.eyebrow::before {
-  content: "";
-  width: 22px;
-  height: 1px;
-  background: var(--brass);
-  display: inline-block;
 }
 
 .intro h1 {
