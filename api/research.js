@@ -26,6 +26,19 @@ function blockedReport(reason) {
   };
 }
 
+function errorReport(err, fallbackMsg) {
+  if (err.code === "RATE_LIMIT") {
+    return {
+      report: "## Research Limit Hit\n\nWait until the daily quota resets, then try again.",
+      reason: "rate_limited",
+    };
+  }
+  return {
+    report: `## Execution Blocked\n\n${fallbackMsg}\n\n**Detail:** ${err.message}`,
+    reason: "error",
+  };
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Use POST" });
@@ -54,9 +67,10 @@ module.exports = async (req, res) => {
   try {
     plan = await extractIntent(question, nowISO);
   } catch (err) {
+    const { report, reason } = errorReport(err, "Could not reach the reasoning layer to interpret this question.");
     res.status(200).json({
-      report: `## Execution Blocked\n\nCould not reach the reasoning layer to interpret this question.\n\n**Detail:** ${err.message}`,
-      metadata: blockedReport("intent_extraction_failed"),
+      report,
+      metadata: blockedReport(reason),
     });
     return;
   }
@@ -192,11 +206,12 @@ module.exports = async (req, res) => {
       caveats,
     });
   } catch (err) {
+    const { report, reason } = errorReport(err, "Evidence was retrieved successfully but the reasoning layer failed to produce a report.");
     res.status(200).json({
-      report: `## Execution Blocked\n\nEvidence was retrieved successfully but the reasoning layer failed to produce a report.\n\n**Detail:** ${err.message}`,
+      report,
       metadata: {
         blocked: true,
-        reason: "report_generation_failed",
+        reason,
         evidence,
         chartSeries,
         utcQueryTime: nowISO,
