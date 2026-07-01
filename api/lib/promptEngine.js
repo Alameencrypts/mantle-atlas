@@ -25,6 +25,11 @@ async function callGemini({ system, userText, maxTokens = 1500 }) {
 
   if (!res.ok) {
     const text = await res.text();
+    if (res.status === 429) {
+      const err = new Error("RATE_LIMIT");
+      err.code = "RATE_LIMIT";
+      throw err;
+    }
     throw new Error(`Gemini API error ${res.status}: ${text}`);
   }
   const data = await res.json();
