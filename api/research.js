@@ -110,6 +110,7 @@ module.exports = async (req, res) => {
           windowStart: windowed[0]?.tvl ?? null,
           windowEnd: windowed[windowed.length - 1]?.tvl ?? null,
           category: resolved.category || null,
+          source: history.source,
         });
         endpointUsed.push(history.source);
       }
@@ -131,6 +132,7 @@ module.exports = async (req, res) => {
         windowPoints: windowed,
         windowStart: windowed[0]?.tvl ?? null,
         windowEnd: windowed[windowed.length - 1]?.tvl ?? null,
+        source: chain.source,
       };
       endpointUsed.push(chain.source);
       confidence = windowed.length >= 2 ? "High" : "Low";
@@ -158,6 +160,28 @@ module.exports = async (req, res) => {
     confidence = "Low";
   }
 
+  // Build chart-ready series from whatever TVL evidence we collected —
+  // the frontend renders these as an SVG line chart alongside the report.
+  const chartSeries = [];
+  if (evidence.protocols && evidence.protocols.length) {
+    for (const p of evidence.protocols) {
+      if (p.windowPoints && p.windowPoints.length >= 2) {
+        chartSeries.push({
+          label: p.resolvedName,
+          unit: "usd",
+          points: p.windowPoints,
+        });
+      }
+    }
+  }
+  if (evidence.chainTvl && evidence.chainTvl.windowPoints && evidence.chainTvl.windowPoints.length >= 2) {
+    chartSeries.push({
+      label: "Mantle chain TVL",
+      unit: "usd",
+      points: evidence.chainTvl.windowPoints,
+    });
+  }
+
   let reportMarkdown;
   try {
     reportMarkdown = await generateReport({
@@ -174,6 +198,7 @@ module.exports = async (req, res) => {
         blocked: true,
         reason: "report_generation_failed",
         evidence,
+        chartSeries,
         utcQueryTime: nowISO,
       },
     });
@@ -191,6 +216,7 @@ module.exports = async (req, res) => {
       endpointsUsed: endpointUsed,
       confidence,
       caveats,
+      chartSeries,
       latencyMs: Date.now() - queryStart,
     },
   });
