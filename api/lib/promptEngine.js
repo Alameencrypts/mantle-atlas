@@ -94,6 +94,13 @@ Produce a Markdown report with EXACTLY these sections, in this order:
 ## Caveats & Limitations
 ## Sources
 
+For the Sources section: render each source as a markdown link using the
+exact "source" URL fields found in the evidence JSON — e.g.
+"- [DefiLlama — Ondo Finance](https://api.llama.fi/protocol/ondo-finance)".
+Never invent, guess, or alter a URL. If a piece of evidence has no source
+URL, name the provider in plain text without a link instead of fabricating
+one.
+
 Keep it tight: this is a research brief, not an essay. Prefer short paragraphs and bullet points over long prose blocks.`;
 
   const userPayload = {
