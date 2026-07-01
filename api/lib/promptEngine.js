@@ -1,0 +1,118 @@
+// api/lib/promptEngine.js
+//
+// Two LLM calls, matching the PRD's "separate retrieval from reasoning":
+//   1. extractIntent  — turns a natural-language question into a structured plan
+//   2. generateReport — reasons ONLY over retrieved evidence, never invents facts
+//
+// Uses Google's Gemini API (free tier via Google AI Studio — no credit card,
+// no expiration, generous daily quota on Flash). Swap MODEL or the fetch
+// target below if you later move to a paid provider.
+
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+async function callGemini({ system, userText, maxTokens = 1500 }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts: [{ text: userText }] }],
+      generationConfig: { maxOutputTokens: maxTokens },
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Gemini API error ${res.status}: ${text}`);
+  }
+  const data = await res.json();
+  const candidate = data.candidates && data.candidates[0];
+  const text = candidate?.content?.parts?.map((p) => p.text || "").join("") || "";
+  return text;
+}
+
+/**
+ * Stage 1-3 of the PRD pipeline: intent detection, entity extraction, time
+ * normalization — collapsed into a single structured-output call.
+ */
+async function extractIntent(question, nowISO) {
+  const system = `You are the intent parser for Mantle Atlas, a blockchain research agent.
+Given a user's research question, extract a structured research plan.
+Respond with ONLY a JSON object, no markdown fences, no preamble. Schema:
+
+{
+  "intent": "protocol_tvl" | "wallet_lookup" | "chain_tvl" | "comparison" | "unsupported",
+  "protocolNameGuess": string | null,
+  "protocolNameGuessB": string | null,   // only for comparison intent
+  "walletAddress": string | null,        // 0x... if present in the question
+  "timeRangeDays": number,               // resolve relative phrases like "last 90 days" to a day count; default 30 if unspecified
+  "metric": "tvl" | "activity" | null
+}
+
+Current UTC time for resolving relative dates: ${nowISO}
+If the question cannot be mapped to a supported intent, use "unsupported".`;
+
+  const raw = await callGemini({
+    system,
+    userText: question,
+    maxTokens: 400,
+  });
+
+  try {
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    return JSON.parse(cleaned);
+  } catch (e) {
+    return { intent: "unsupported", raw };
+  }
+}
+
+/**
+ * Stage 7 of the PRD pipeline: reasoning over validated evidence only.
+ * evidence is a plain JS object — never free text the model could confuse
+ * for instructions.
+ */
+async function generateReport({ question, plan, evidence, confidence, caveats }) {
+  const system = `You are Mantle Atlas, an institutional blockchain research analyst for the Mantle ecosystem.
+
+Rules:
+- You NEVER invent blockchain facts. Only reason over the JSON evidence provided in the user message.
+- Distinguish clearly between Facts (directly in the evidence), Interpretation (your reasoning), and Unknowns (gaps in the evidence).
+- Never exaggerate or speculate without grounding in the evidence.
+- Tone: professional, objective, evidence-based. Not conversational, not hype-y.
+- Always end with a stated Confidence level (High/Medium/Low) and a one-line reason for that rating.
+- Always include the data source(s) and the UTC date range covered.
+
+Produce a Markdown report with EXACTLY these sections, in this order:
+## Executive Summary
+## Historical Context
+## Evidence
+## Interpretation
+## Why It Matters
+## Confidence
+## Caveats & Limitations
+## Sources
+
+Keep it tight: this is a research brief, not an essay. Prefer short paragraphs and bullet points over long prose blocks.`;
+
+  const userPayload = {
+    research_question: question,
+    research_plan: plan,
+    evidence,
+    system_computed_confidence: confidence,
+    system_flagged_caveats: caveats,
+  };
+
+  return callGemini({
+    system,
+    userText: `Research question: "${question}"\n\nStructured evidence (JSON):\n${JSON.stringify(
+      userPayload,
+      null,
+      2
+    )}\n\nProduce the institutional report now.`,
+    maxTokens: 1800,
+  });
+}
+
+module.exports = { extractIntent, generateReport };

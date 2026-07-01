@@ -1,0 +1,12 @@
+{
+  "name": "mantle-atlas",
+  "version": "0.1.0",
+  "description": "AI-powered institutional research agent for the Mantle ecosystem — MVP scope: AI Research Chat -> full report.",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

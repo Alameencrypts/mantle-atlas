@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mantle Atlas — Research Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">
+      <span class="wordmark-mark">M∆</span>
+      <span class="wordmark-text">Mantle Atlas</span>
+    </div>
+    <div class="status-strip" id="statusStrip">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">indexer link idle</span>
+    </div>
+  </div>
+</header>
+
+<main class="workspace">
+
+  <section class="intro">
+    <p class="eyebrow">The Intelligence Layer for Onchain Research</p>
+    <h1>Ask the Mantle ecosystem a question.<br>Get a research brief, not a dashboard.</h1>
+  </section>
+
+  <section class="composer">
+    <textarea id="questionInput" rows="2" placeholder="e.g. Why did Ondo TVL increase over the last 90 days?"></textarea>
+    <button id="submitBtn">
+      <span id="submitLabel">Research</span>
+    </button>
+  </section>
+
+  <div class="chips" id="exampleChips">
+    <button class="chip" data-q="Why did Ondo TVL increase over the last 90 days?">Ondo TVL, 90d</button>
+    <button class="chip" data-q="What is the Mantle chain-wide TVL trend over the last 30 days?">Mantle chain TVL, 30d</button>
+    <button class="chip" data-q="Compare mETH and Ondo TVL over the last 60 days">Compare mETH vs Ondo</button>
+    <button class="chip" data-q="Look up wallet activity for 0x0000000000000000000000000000000000dEaD">Wallet lookup (example)</button>
+  </div>
+
+  <section id="resultArea" class="result-area" hidden>
+
+    <div class="ledger" id="ledger">
+      <!-- filled by JS: the signature evidence strip -->
+    </div>
+
+    <article class="report" id="reportBody"></article>
+
+    <div class="report-actions" id="reportActions" hidden>
+      <button id="copyBtn">Copy report</button>
+      <button id="downloadBtn">Download .md</button>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span>Evidence over speculation. Every figure above traces to a cited source and a UTC time window.</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
