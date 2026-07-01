@@ -293,6 +293,8 @@ body::after {
 
 .ledger-label { color: var(--brass); opacity: 0.85; margin-right: 5px; }
 .ledger-value { color: var(--parchment); }
+.ledger-link { color: var(--parchment); text-decoration: none; border-bottom: 1px dotted var(--brass-dim); transition: color 0.15s ease, border-color 0.15s ease; }
+.ledger-link:hover { color: var(--brass); border-color: var(--brass); }
 .ledger-value.confidence-high { color: var(--signal-green); text-shadow: 0 0 10px rgba(79, 224, 160, 0.35); }
 .ledger-value.confidence-medium { color: var(--brass); text-shadow: 0 0 10px rgba(63, 226, 140, 0.35); }
 .ledger-value.confidence-low { color: var(--signal-red); text-shadow: 0 0 10px rgba(226, 115, 95, 0.35); }
@@ -322,6 +324,13 @@ body::after {
 .report ul, .report ol { margin: 0 0 14px; padding-left: 22px; }
 .report li { margin-bottom: 6px; }
 .report strong { color: var(--parchment); font-weight: 600; }
+.report a {
+  color: var(--brass);
+  text-decoration: none;
+  border-bottom: 1px solid var(--brass-dim);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.report a:hover { color: var(--signal-green); border-color: var(--signal-green); }
 .report code {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.85em;
@@ -348,7 +357,96 @@ body::after {
 }
 .report-actions button:hover { border-color: var(--brass-dim); color: var(--parchment); transform: translateY(-1px); }
 
-/* ---------- footer ---------- */
+/* ---------- live pulse (always-on landing chart) ---------- */
+
+.pulse {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 14px 18px;
+  animation: riseIn 0.4s ease both;
+}
+
+.pulse-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--parchment-dim);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal-green);
+  box-shadow: 0 0 8px 2px rgba(79, 224, 160, 0.55);
+  animation: pulse 1.6s infinite ease-in-out;
+}
+
+.pulse-figures {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.pulse-value {
+  font-family: 'Newsreader', serif;
+  font-size: 20px;
+  color: var(--parchment);
+}
+
+.pulse-change {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.pulse-change.up { color: var(--signal-green); background: rgba(79, 224, 160, 0.1); }
+.pulse-change.down { color: var(--signal-red); background: rgba(226, 115, 95, 0.1); }
+
+.pulse-spark {
+  flex: 1;
+  height: 40px;
+  min-width: 120px;
+}
+
+/* ---------- evidence chart (attached to a report) ---------- */
+
+.chart-wrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 18px 18px 10px;
+  margin-bottom: 28px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  color: var(--parchment-dim);
+}
+
+.chart-legend-item { display: flex; align-items: center; gap: 6px; }
+.chart-legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+.chart-axis-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  fill: var(--parchment-dim);
+}
 
 .foot {
   max-width: 760px;
