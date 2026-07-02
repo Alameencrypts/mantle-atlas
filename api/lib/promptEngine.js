@@ -99,11 +99,11 @@ Produce a Markdown report with EXACTLY these sections, in this order:
 ## Sources
 
 For the Sources section: render each source as a markdown link using the
-exact "source" URL fields found in the evidence JSON — e.g.
-"- [DefiLlama — Ondo Finance](https://api.llama.fi/protocol/ondo-finance)".
-Never invent, guess, or alter a URL. If a piece of evidence has no source
-URL, name the provider in plain text without a link instead of fabricating
-one.
+exact "citeUrl" fields found in the evidence JSON (these are human-readable
+pages, not raw API endpoints) — e.g.
+"- [DefiLlama — Ondo Finance](https://defillama.com/protocol/ondo-finance)".
+Never invent, guess, or alter a URL. If a piece of evidence has no citeUrl,
+name the provider in plain text without a link instead of fabricating one.
 
 Keep it tight: this is a research brief, not an essay. Prefer short paragraphs and bullet points over long prose blocks.`;
 
