@@ -128,7 +128,13 @@ module.exports = async (req, res) => {
           citeUrl: history.citeUrl,
         });
         endpointUsed.push(history.source);
-        sourceLinks.push({ label: `DefiLlama — ${resolved.name}`, url: history.citeUrl });
+        sourceLinks.push({
+          label:
+            history.scope === "mantle-only"
+              ? `DefiLlama — ${resolved.name} (page defaults to all-chain view — filter to "Mantle" for these figures)`
+              : `DefiLlama — ${resolved.name}`,
+          url: history.citeUrl,
+        });
       }
 
       if (evidence.protocols.length === 0) {
