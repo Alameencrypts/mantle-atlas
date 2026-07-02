@@ -5,7 +5,6 @@ const {
   resolveMantleProtocol,
   getProtocolTvlHistory,
   getMantleChainTvlHistory,
-  getWalletActivity,
   filterRange,
 } = require("./lib/dataSources");
 const { extractIntent, generateReport } = require("./lib/promptEngine");
@@ -78,7 +77,7 @@ module.exports = async (req, res) => {
   if (plan.intent === "unsupported") {
     res.status(200).json({
       report:
-        "## Unable to Process\n\nThis question doesn't map to a supported research type yet. Mantle Atlas currently supports:\n\n- Protocol TVL analysis (e.g. \"Why did Ondo TVL increase over the last 90 days?\")\n- Wallet lookups (paste a 0x... address)\n- Mantle chain-wide TVL trends\n- Two-protocol comparisons\n\nTry rephrasing around one of these.",
+        "## Unable to Process\n\nThis question doesn't map to a supported research type yet. Mantle Atlas currently supports:\n\n- Protocol TVL analysis (e.g. \"Why did Ondo TVL increase over the last 90 days?\")\n- Mantle chain-wide TVL trends\n- Two-protocol comparisons\n\nTry rephrasing around one of these.",
       metadata: { blocked: false, intent: "unsupported", utcQueryTime: nowISO },
     });
     return;
@@ -150,24 +149,6 @@ module.exports = async (req, res) => {
       };
       endpointUsed.push(chain.source);
       confidence = windowed.length >= 2 ? "High" : "Low";
-    } else if (plan.intent === "wallet_lookup") {
-      if (!plan.walletAddress) {
-        caveats.push("No wallet address detected in the question.");
-        confidence = "Low";
-      } else {
-        const wallet = await getWalletActivity(plan.walletAddress);
-        evidence.wallet = wallet;
-        endpointUsed.push(wallet.source);
-        if (wallet.blocked) {
-          confidence = "Low";
-          caveats.push(`Wallet endpoint unreachable: ${wallet.reason}.`);
-        } else if (wallet.empty) {
-          confidence = "Low";
-          caveats.push("No transaction history found for this address.");
-        } else {
-          confidence = "Medium";
-        }
-      }
     }
   } catch (err) {
     caveats.push(`Data retrieval error: ${err.message}`);
