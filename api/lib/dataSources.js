@@ -102,6 +102,7 @@ async function getProtocolTvlHistory(slug) {
     points,
     currentTvl: points.length ? points[points.length - 1].tvl : null,
     source: `${LLAMA_BASE}/protocol/${slug}`,
+    citeUrl: `https://defillama.com/protocol/${slug}`,
   };
 }
 
@@ -118,6 +119,7 @@ async function getMantleChainTvlHistory() {
     points,
     currentTvl: points.length ? points[points.length - 1].tvl : null,
     source: `${LLAMA_BASE}/v2/historicalChainTvl/Mantle`,
+    citeUrl: `https://defillama.com/chain/Mantle`,
   };
 }
 
