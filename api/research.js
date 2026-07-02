@@ -8,6 +8,7 @@ const {
   filterRange,
 } = require("./lib/dataSources");
 const { extractIntent, generateReport } = require("./lib/promptEngine");
+const { runGeneralResearch } = require("./general");
 
 function daysAgoISO(days, from = new Date()) {
   const d = new Date(from);
@@ -75,11 +76,21 @@ module.exports = async (req, res) => {
   }
 
   if (plan.intent === "unsupported") {
-    res.status(200).json({
-      report:
-        "## Unable to Process\n\nThis question doesn't map to a supported research type yet. Mantle Atlas currently supports:\n\n- Protocol TVL analysis (e.g. \"Why did Ondo TVL increase over the last 90 days?\")\n- Mantle chain-wide TVL trends\n- Two-protocol comparisons\n\nTry rephrasing around one of these.",
-      metadata: { blocked: false, intent: "unsupported", utcQueryTime: nowISO },
-    });
+    // Fall through to general ecosystem research (Gemini + search grounding + KB)
+    try {
+      const general = await runGeneralResearch(question);
+      res.status(200).json({
+        report: general.report,
+        metadata: { blocked: false, intent: "general_research", utcQueryTime: nowISO },
+      });
+    } catch (err) {
+      console.error("general research fallback failed:", err);
+      res.status(200).json({
+        report:
+          "## Unable to Process\n\nThe research layer is temporarily unavailable for open-ended questions. Structured queries still work:\n\n- Protocol TVL analysis (e.g. \"Why did Ondo TVL increase over the last 90 days?\")\n- Mantle chain-wide TVL trends\n- Two-protocol comparisons",
+        metadata: { blocked: false, intent: "unsupported", utcQueryTime: nowISO },
+      });
+    }
     return;
   }
 
