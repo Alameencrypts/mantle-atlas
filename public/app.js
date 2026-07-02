@@ -182,25 +182,16 @@ function renderLedger(meta) {
     items.push(`<span class="ledger-item"><span class="ledger-label">intent</span><span class="ledger-value">${meta.intent}</span></span>`);
   }
 
-  if (meta.endpointsUsed && meta.endpointsUsed.length) {
+  if (meta.sourceLinks && meta.sourceLinks.length) {
     const seen = new Set();
     const linkParts = [];
-    for (const u of meta.endpointsUsed) {
-      let host, href;
-      try {
-        const parsed = new URL(u);
-        host = parsed.hostname;
-        href = u;
-      } catch {
-        host = u;
-        href = null;
-      }
-      if (seen.has(host)) continue;
-      seen.add(host);
+    for (const s of meta.sourceLinks) {
+      if (!s.url || seen.has(s.url)) continue;
+      seen.add(s.url);
+      let host;
+      try { host = new URL(s.url).hostname; } catch { host = s.url; }
       linkParts.push(
-        href
-          ? `<a href="${href}" target="_blank" rel="noopener noreferrer" class="ledger-value ledger-link">${host}</a>`
-          : `<span class="ledger-value">${host}</span>`
+        `<a href="${s.url}" target="_blank" rel="noopener noreferrer" class="ledger-value ledger-link" title="${s.label}">${host}</a>`
       );
     }
     items.push(`<span class="ledger-item"><span class="ledger-label">source</span>${linkParts.join(", ")}</span>`);
