@@ -104,6 +104,10 @@ pages, not raw API endpoints) — e.g.
 "- [DefiLlama — Ondo Finance](https://defillama.com/protocol/ondo-finance)".
 Never invent, guess, or alter a URL. If a piece of evidence has no citeUrl,
 name the provider in plain text without a link instead of fabricating one.
+If a piece of evidence has "scope": "mantle-only", add a short parenthetical
+after that link noting the page defaults to a combined all-chain view and
+the reader should filter to Mantle to see the figures used in this report —
+otherwise the numbers on the page will look inconsistent with this report.
 
 Keep it tight: this is a research brief, not an essay. Prefer short paragraphs and bullet points over long prose blocks.`;
 
