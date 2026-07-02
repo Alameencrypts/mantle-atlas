@@ -91,6 +91,7 @@ module.exports = async (req, res) => {
   const caveats = [];
   let confidence = "Medium";
   let endpointUsed = [];
+  let sourceLinks = [];
 
   try {
     if (plan.intent === "protocol_tvl" || plan.intent === "comparison") {
@@ -124,8 +125,10 @@ module.exports = async (req, res) => {
           windowEnd: windowed[windowed.length - 1]?.tvl ?? null,
           category: resolved.category || null,
           source: history.source,
+          citeUrl: history.citeUrl,
         });
         endpointUsed.push(history.source);
+        sourceLinks.push({ label: `DefiLlama — ${resolved.name}`, url: history.citeUrl });
       }
 
       if (evidence.protocols.length === 0) {
@@ -146,8 +149,10 @@ module.exports = async (req, res) => {
         windowStart: windowed[0]?.tvl ?? null,
         windowEnd: windowed[windowed.length - 1]?.tvl ?? null,
         source: chain.source,
+        citeUrl: chain.citeUrl,
       };
       endpointUsed.push(chain.source);
+      sourceLinks.push({ label: "DefiLlama — Mantle chain TVL", url: chain.citeUrl });
       confidence = windowed.length >= 2 ? "High" : "Low";
     }
   } catch (err) {
@@ -195,6 +200,7 @@ module.exports = async (req, res) => {
         reason,
         evidence,
         chartSeries,
+        sourceLinks,
         utcQueryTime: nowISO,
       },
     });
@@ -210,6 +216,7 @@ module.exports = async (req, res) => {
       utcAnalysisRangeStart: startISO,
       utcAnalysisRangeEnd: endISO,
       endpointsUsed: endpointUsed,
+      sourceLinks,
       confidence,
       caveats,
       chartSeries,
