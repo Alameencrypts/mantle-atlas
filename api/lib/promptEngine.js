@@ -48,10 +48,9 @@ Given a user's research question, extract a structured research plan.
 Respond with ONLY a JSON object, no markdown fences, no preamble. Schema:
 
 {
-  "intent": "protocol_tvl" | "wallet_lookup" | "chain_tvl" | "comparison" | "unsupported",
+  "intent": "protocol_tvl" | "chain_tvl" | "comparison" | "unsupported",
   "protocolNameGuess": string | null,
   "protocolNameGuessB": string | null,   // only for comparison intent
-  "walletAddress": string | null,        // 0x... if present in the question
   "timeRangeDays": number,               // resolve relative phrases like "last 90 days" to a day count; default 30 if unspecified
   "metric": "tvl" | "activity" | null
 }
