@@ -8,11 +8,17 @@
 //
 // Sources used:
 //   - DefiLlama (https://api.llama.fi) — protocol + chain TVL, no API key needed
-//   - Mantlescan (https://api.mantlescan.xyz) — wallet/tx data, optional API key
-//     via MANTLESCAN_API_KEY env var (works without one but rate-limited)
+//   - Etherscan V2 multichain API (https://api.etherscan.io/v2/api, chainid=5000)
+//     — wallet/tx data for Mantle. Requires ETHERSCAN_API_KEY (free, but
+//     mandatory — Mantlescan's old standalone endpoint now runs on this
+//     unified system with no meaningful unauthenticated tier).
 
 const LLAMA_BASE = "https://api.llama.fi";
-const MANTLESCAN_BASE = "https://api.mantlescan.xyz/api";
+// Mantlescan has migrated onto Etherscan's unified V2 multichain API.
+// Mantle's chain ID is 5000. This requires a real Etherscan API key for
+// every request — there is no meaningful unauthenticated tier anymore.
+const ETHERSCAN_V2_BASE = "https://api.etherscan.io/v2/api";
+const MANTLE_CHAIN_ID = 5000;
 
 async function fetchJson(url, { timeoutMs = 10000 } = {}) {
   const controller = new AbortController();
@@ -132,30 +138,64 @@ function filterRange(points, startISO, endISO) {
 }
 
 /**
- * Wallet activity via Mantlescan (Etherscan-compatible API).
- * Works without an API key at low volume; set MANTLESCAN_API_KEY to raise limits.
+ * Wallet activity for the Mantle chain, via Etherscan's V2 multichain API
+ * (chainid=5000). This requires a real ETHERSCAN_API_KEY — Mantlescan's old
+ * standalone endpoint has migrated onto this unified system and no longer
+ * has a meaningful unauthenticated tier.
  * Returns { address, txCount, firstTx, lastTx, transactions, source, blocked }
  */
 async function getWalletActivity(address, { limit = 50 } = {}) {
-  const apiKey = process.env.MANTLESCAN_API_KEY || "";
+  const apiKey = process.env.ETHERSCAN_API_KEY || "";
+
+  if (!apiKey) {
+    return {
+      address,
+      blocked: true,
+      reason: "missing_ETHERSCAN_API_KEY",
+      source: ETHERSCAN_V2_BASE,
+      note: "Wallet lookups require a free Etherscan API key (Mantlescan runs on Etherscan's unified V2 multichain API now) — set ETHERSCAN_API_KEY.",
+    };
+  }
+
   const url =
-    `${MANTLESCAN_BASE}?module=account&action=txlist&address=${address}` +
-    `&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc` +
-    (apiKey ? `&apikey=${apiKey}` : "");
+    `${ETHERSCAN_V2_BASE}?chainid=${MANTLE_CHAIN_ID}&module=account&action=txlist` +
+    `&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}` +
+    `&sort=desc&apikey=${apiKey}`;
 
   try {
     const data = await fetchJson(url);
-    if (data.status !== "1" || !Array.isArray(data.result)) {
+
+    // Etherscan-style APIs return HTTP 200 even for real errors (bad key,
+    // invalid address, rate limit) — the failure only shows up in the JSON
+    // body. Collapsing all of these into "empty" would hide real problems
+    // as "wallet has no activity," so they're kept distinct.
+    const isGenuinelyEmpty =
+      data.status === "0" &&
+      typeof data.message === "string" &&
+      data.message.toLowerCase().includes("no transactions found");
+
+    if (isGenuinelyEmpty) {
       return {
         address,
         blocked: false,
         empty: true,
         txCount: 0,
         transactions: [],
-        source: MANTLESCAN_BASE,
-        note: data.message || "No transactions found for this address.",
+        source: ETHERSCAN_V2_BASE,
+        note: "No transactions found for this address.",
       };
     }
+
+    if (data.status !== "1" || !Array.isArray(data.result)) {
+      return {
+        address,
+        blocked: true,
+        reason: data.message || data.result || "unknown_api_error",
+        source: ETHERSCAN_V2_BASE,
+        note: "Etherscan V2 API returned an error for this address (check the API key and chain ID).",
+      };
+    }
+
     const txs = data.result;
     return {
       address,
@@ -176,7 +216,7 @@ async function getWalletActivity(address, { limit = 50 } = {}) {
         timestamp: new Date(Number(t.timeStamp) * 1000).toISOString(),
         methodId: t.methodId,
       })),
-      source: MANTLESCAN_BASE,
+      source: ETHERSCAN_V2_BASE,
     };
   } catch (err) {
     return {
@@ -184,7 +224,7 @@ async function getWalletActivity(address, { limit = 50 } = {}) {
       blocked: true,
       reason: "endpoint_unreachable",
       detail: String(err.message || err),
-      source: MANTLESCAN_BASE,
+      source: ETHERSCAN_V2_BASE,
     };
   }
 }
