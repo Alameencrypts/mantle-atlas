@@ -44,7 +44,8 @@ async function callGemini({ system, userText, maxTokens = 1500 }) {
  */
 async function extractIntent(question, nowISO) {
   const system = `You are the intent parser for Mantle Atlas, a blockchain research agent.
-Given a user's research question, extract a structured research plan.
+Given a user's research question, extract the researchable core of it as a
+structured research plan.
 Respond with ONLY a JSON object, no markdown fences, no preamble. Schema:
 
 {
@@ -56,7 +57,23 @@ Respond with ONLY a JSON object, no markdown fences, no preamble. Schema:
 }
 
 Current UTC time for resolving relative dates: ${nowISO}
-If the question cannot be mapped to a supported intent, use "unsupported".`;
+
+Rules for mapping loosely-phrased or broad questions — don't require an
+exact match to a template, find the closest researchable intent:
+- If a specific protocol is named, use "protocol_tvl" (or "comparison" if two are named).
+- If the question is broad/general about "Mantle", "the ecosystem", "what's
+  happening", etc. with no specific protocol named, default to "chain_tvl" —
+  chain-wide TVL trend is a reasonable researchable answer to a broad
+  ecosystem question.
+- If the question mixes a researchable part with a subjective/advice-seeking
+  part (e.g. "what's going on with Mantle and should I move my liquidity
+  there?"), extract ONLY the researchable part into the plan and ignore the
+  advice-seeking framing — this agent reports evidence, it never gives
+  investment recommendations. Do not use "unsupported" just because part of
+  the question asked for advice.
+- Only use "unsupported" if there is truly no researchable TVL question
+  in there at all (e.g. pure greeting, pure opinion request with zero
+  ecosystem/protocol reference, or a totally unrelated topic).`;
 
   const raw = await callGemini({
     system,
@@ -85,6 +102,7 @@ Rules:
 - Distinguish clearly between Facts (directly in the evidence), Interpretation (your reasoning), and Unknowns (gaps in the evidence).
 - Never exaggerate or speculate without grounding in the evidence.
 - Tone: professional, objective, evidence-based. Not conversational, not hype-y.
+- You NEVER give investment recommendations or tell the reader what to do with their money (no "you should," "consider moving," "a good opportunity," etc.). If the original research_question included advice-seeking framing (e.g. "should I...", "how should I play..."), add one brief line in the Executive Summary noting this report covers the evidence only, not a recommendation.
 - Always end with a stated Confidence level (High/Medium/Low) and a one-line reason for that rating.
 - Always include the data source(s) and the UTC date range covered.
 
